@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { withdrawSchema } from "@/lib/validation";
@@ -38,12 +38,16 @@ const Withdraw = () => {
   const [rpc, setRpc] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isProcessing, setIsProcessing] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const storedBalance = localStorage.getItem("rp_balance");
     if (storedBalance) {
       setBalance(parseFloat(storedBalance));
     }
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
   }, []);
 
   const formatNaira = (value: number) => {
@@ -60,7 +64,6 @@ const Withdraw = () => {
 
     const numAmount = parseFloat(amount) || 0;
 
-    // Validate form data
     const result = withdrawSchema.safeParse({
       accountNumber,
       accountName,
@@ -81,14 +84,12 @@ const Withdraw = () => {
       return;
     }
 
-    // Check RPC code
     if (rpc !== "RPC200420") {
       setErrors({ rpc: "Invalid RPC code" });
       toast.error("Invalid RPC code. Please purchase a valid RPC code.");
       return;
     }
 
-    // Check balance
     if (numAmount > balance) {
       setErrors({ amount: "Insufficient balance" });
       toast.error("Insufficient balance for this withdrawal");
@@ -97,12 +98,10 @@ const Withdraw = () => {
 
     setIsProcessing(true);
 
-    // Simulate processing
-    setTimeout(() => {
+    timerRef.current = setTimeout(() => {
       const newBalance = balance - numAmount;
       localStorage.setItem("rp_balance", newBalance.toString());
       
-      // Add to transaction history
       const transactions = JSON.parse(localStorage.getItem("transactions") || "[]");
       transactions.unshift({
         title: `Withdrawal to ${bank}`,
@@ -118,11 +117,12 @@ const Withdraw = () => {
   };
 
   return (
-    <main className="min-h-screen bg-[#0a0000] p-5 text-foreground">
+    <main className="min-h-screen bg-background p-5 text-foreground">
       <div className="mx-auto max-w-[500px]">
         <button
           onClick={() => navigate("/dashboard")}
-          className="mb-4 text-2xl text-white/70 hover:text-white"
+          className="mb-4 text-2xl text-foreground/70 hover:text-foreground"
+          aria-label="Back to dashboard"
         >
           ←
         </button>
@@ -132,18 +132,19 @@ const Withdraw = () => {
           Enter your bank details below
         </p>
 
-        <div className="mb-6 rounded-xl border border-primary/20 bg-[#1a0000] p-4 text-center">
+        <div className="mb-6 rounded-xl border border-primary/20 bg-card p-4 text-center">
           <div className="text-sm text-muted-foreground">Available Balance</div>
           <div className="text-2xl font-bold text-[#00ff00]">{formatNaira(balance)}</div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="rounded-xl border border-primary/20 bg-[#1a0000] p-4">
+          <div className="rounded-xl border border-primary/20 bg-card p-4">
             <label className="mb-1.5 block text-sm text-muted-foreground">
               Account Number
             </label>
             <input
               type="text"
+              inputMode="numeric"
               value={accountNumber}
               onChange={(e) => {
                 const value = e.target.value.replace(/\D/g, '').slice(0, 10);
@@ -151,16 +152,16 @@ const Withdraw = () => {
               }}
               placeholder="Enter 10-digit account number"
               maxLength={10}
-              className={`w-full rounded-lg bg-[#250000] p-3 text-foreground placeholder:text-muted-foreground ${
-                errors.accountNumber ? "border border-red-500" : ""
+              className={`w-full rounded-lg bg-secondary p-3 text-foreground placeholder:text-muted-foreground ${
+                errors.accountNumber ? "border border-destructive" : ""
               }`}
             />
             {errors.accountNumber && (
-              <p className="mt-1 text-xs text-red-500">{errors.accountNumber}</p>
+              <p className="mt-1 text-xs text-destructive">{errors.accountNumber}</p>
             )}
           </div>
 
-          <div className="rounded-xl border border-primary/20 bg-[#1a0000] p-4">
+          <div className="rounded-xl border border-primary/20 bg-card p-4">
             <label className="mb-1.5 block text-sm text-muted-foreground">
               Account Name
             </label>
@@ -170,24 +171,24 @@ const Withdraw = () => {
               onChange={(e) => setAccountName(e.target.value)}
               placeholder="Enter account name"
               maxLength={50}
-              className={`w-full rounded-lg bg-[#250000] p-3 text-foreground placeholder:text-muted-foreground ${
-                errors.accountName ? "border border-red-500" : ""
+              className={`w-full rounded-lg bg-secondary p-3 text-foreground placeholder:text-muted-foreground ${
+                errors.accountName ? "border border-destructive" : ""
               }`}
             />
             {errors.accountName && (
-              <p className="mt-1 text-xs text-red-500">{errors.accountName}</p>
+              <p className="mt-1 text-xs text-destructive">{errors.accountName}</p>
             )}
           </div>
 
-          <div className="rounded-xl border border-primary/20 bg-[#1a0000] p-4">
+          <div className="rounded-xl border border-primary/20 bg-card p-4">
             <label className="mb-1.5 block text-sm text-muted-foreground">
               Select Bank
             </label>
             <select
               value={bank}
               onChange={(e) => setBank(e.target.value)}
-              className={`w-full rounded-lg bg-[#250000] p-3 text-foreground ${
-                errors.bank ? "border border-red-500" : ""
+              className={`w-full rounded-lg bg-secondary p-3 text-foreground ${
+                errors.bank ? "border border-destructive" : ""
               }`}
             >
               <option value="">Select a bank</option>
@@ -198,31 +199,32 @@ const Withdraw = () => {
               ))}
             </select>
             {errors.bank && (
-              <p className="mt-1 text-xs text-red-500">{errors.bank}</p>
+              <p className="mt-1 text-xs text-destructive">{errors.bank}</p>
             )}
           </div>
 
-          <div className="rounded-xl border border-primary/20 bg-[#1a0000] p-4">
+          <div className="rounded-xl border border-primary/20 bg-card p-4">
             <label className="mb-1.5 block text-sm text-muted-foreground">
               Amount (₦)
             </label>
             <input
               type="number"
+              inputMode="numeric"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="Enter amount"
               min="1"
               max="10000000"
-              className={`w-full rounded-lg bg-[#250000] p-3 text-foreground placeholder:text-muted-foreground ${
-                errors.amount ? "border border-red-500" : ""
+              className={`w-full rounded-lg bg-secondary p-3 text-foreground placeholder:text-muted-foreground ${
+                errors.amount ? "border border-destructive" : ""
               }`}
             />
             {errors.amount && (
-              <p className="mt-1 text-xs text-red-500">{errors.amount}</p>
+              <p className="mt-1 text-xs text-destructive">{errors.amount}</p>
             )}
           </div>
 
-          <div className="rounded-xl border border-primary/20 bg-[#1a0000] p-4">
+          <div className="rounded-xl border border-primary/20 bg-card p-4">
             <label className="mb-1.5 block text-sm text-muted-foreground">
               RPC Code
             </label>
@@ -232,19 +234,19 @@ const Withdraw = () => {
               onChange={(e) => setRpc(e.target.value)}
               placeholder="Enter RPC code"
               maxLength={20}
-              className={`w-full rounded-lg bg-[#250000] p-3 text-foreground placeholder:text-muted-foreground ${
-                errors.rpc ? "border border-red-500" : ""
+              className={`w-full rounded-lg bg-secondary p-3 text-foreground placeholder:text-muted-foreground ${
+                errors.rpc ? "border border-destructive" : ""
               }`}
             />
             {errors.rpc && (
-              <p className="mt-1 text-xs text-red-500">{errors.rpc}</p>
+              <p className="mt-1 text-xs text-destructive">{errors.rpc}</p>
             )}
           </div>
 
           <button
             type="submit"
             disabled={isProcessing}
-            className="w-full rounded-xl bg-primary p-4 text-lg font-bold transition-colors hover:bg-primary/80 disabled:opacity-50"
+            className="w-full rounded-xl bg-primary p-4 text-lg font-bold text-primary-foreground transition-colors hover:bg-primary/80 disabled:opacity-50"
           >
             {isProcessing ? "Processing..." : "Withdraw"}
           </button>

@@ -168,16 +168,21 @@ const Dashboard = () => {
 
         {/* Grid Menu */}
         <div className="grid grid-cols-3 gap-3.5">
-          {gridItems.map((item) => (
+          {gridItems.map((item) => {
+            const routes: Record<string, string> = {
+              buyRpc: "/buy-rpc",
+              broadcast: "/broadcast",
+              refer: "/refer",
+              community: "/community",
+              support: "/support",
+              history: "/history",
+            };
+            return (
             <div
               key={item.id}
-            onClick={() => {
-                if (item.id === "buyRpc") navigate("/buy-rpc");
-                if (item.id === "broadcast") navigate("/broadcast");
-                if (item.id === "refer") navigate("/refer");
-                if (item.id === "community") navigate("/community");
-                if (item.id === "support") navigate("/support");
-                if (item.id === "history") navigate("/history");
+              onClick={() => {
+                const route = routes[item.id];
+                if (route) navigate(route);
               }}
               className="flex min-h-[84px] cursor-pointer flex-col items-center justify-center rounded-xl border border-white/5 bg-white/[0.02] p-[18px_10px] text-center transition-transform hover:scale-105"
             >
@@ -189,7 +194,8 @@ const Dashboard = () => {
               </div>
               <span className="text-[13px] text-muted-foreground">{item.label}</span>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Promo Carousel */}
