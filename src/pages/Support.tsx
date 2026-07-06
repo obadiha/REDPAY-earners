@@ -48,7 +48,7 @@ const Support = () => {
           </p>
 
           <a
-            href="https://wa.me/2348154206173"
+            href="https://wa.me/2348142890864"
             target="_blank"
             rel="noopener noreferrer"
           >
