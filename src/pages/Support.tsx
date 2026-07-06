@@ -24,7 +24,7 @@ const Support = () => {
           <div className="mb-2.5 text-5xl">📨</div>
           <h2 className="mb-2 text-xl font-bold">Telegram</h2>
           <p className="mb-4 text-muted-foreground">Chat with us on Telegram</p>
-          <a href="t.me/Drexsupport00" target="_blank" rel="noopener noreferrer">
+          <a href="https.//t.me/Drexsupport00" target="_blank" rel="noopener noreferrer">
             <button className="w-full rounded-[10px] bg-[#2A66FF] px-4 py-3 text-lg font-medium text-white transition-opacity hover:opacity-80">
               Open Telegram
             </button>
